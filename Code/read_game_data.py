@@ -1,6 +1,6 @@
 import time
 
-file_path = "C:\\Users\\Laween\\Downloads\\game_data.txt"  # Must match Lua script
+file_path = "C:\\Users\\thanos\\OneDrive - MNSCU\\Desktop\\school\\dark_souls_ai_code\\FP-Machine-Learning\\Code\\player_info.txt"  # Must match Lua script
 
 print("Listening for game data...")
 
