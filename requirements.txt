@@ -1,0 +1,3 @@
+pyautogui>=0.9.52 // pyautogui is for programmatically controlling the mouse and keyboard.
+Pillow>=8.0.0 // Pillow is for image processing.
+
