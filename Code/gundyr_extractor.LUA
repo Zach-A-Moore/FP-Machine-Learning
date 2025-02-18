@@ -8,11 +8,11 @@ function updateValues()
     local GUNDYR_ANGLE_PTR = "[[[WorldChrMan]+40]+28]+74"
 
 
-    local gundyrHealth = readInteger(GUNDYR_HEALTH_PTR) or 0
-    local gundyrX = readFloat(GUNDYR_X_PTR) or 0.0
-    local gundyrY = readFloat(GUNDYR_Y_PTR) or 0.0
-    local gundyrZ = readFloat(GUNDYR_Z_PTR) or 0.0
-    local gundyrAngle = readFloat(GUNDYR_ANGLE_PTR) or 0.0
+    local gundyrHealth = readInteger(GUNDYR_HEALTH_PTR) or -999
+    local gundyrX = readFloat(GUNDYR_X_PTR) or -999.0
+    local gundyrY = readFloat(GUNDYR_Y_PTR) or -999.0
+    local gundyrZ = readFloat(GUNDYR_Z_PTR) or -999.0
+    local gundyrAngle = readFloat(GUNDYR_ANGLE_PTR) or -999.0
 
     -- Format the data
     local data = string.format("%d,%.2f,%.2f,%.2f,%.2f\n", gundyrHealth, gundyrX, gundyrY, gundyrZ, gundyrAngle)

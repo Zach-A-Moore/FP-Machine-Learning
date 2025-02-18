@@ -10,14 +10,14 @@ function updateValues()
 
     -- We don't need health, just use the damage taken logger
 
-    local playerStamina = readInteger(CURRENT_STAMINA_PTR) or 0
+    local playerStamina = readInteger(CURRENT_STAMINA_PTR) or -999
     -- weird bug where when stamina < 0 it turns into some huge number, this didn't fix it
     if CURRENT_STAMINA_PTR < 0 then
-        playerStamina = 0
-    local playerX = readFloat(CURRENT_X_PTR) or 0.0
-    local playerY = readFloat(CURRENT_Y_PTR) or 0.0
-    local playerZ = readFloat(CURRENT_Z_PTR) or 0.0
-    local playerAngle = readFloat(CURRENT_ANGLE_PTR) or 0.0
+        playerStamina = -999
+    local playerX = readFloat(CURRENT_X_PTR) or -999.0
+    local playerY = readFloat(CURRENT_Y_PTR) or -999.0
+    local playerZ = readFloat(CURRENT_Z_PTR) or -999.0
+    local playerAngle = readFloat(CURRENT_ANGLE_PTR) or -999.0
 
     -- Format the data
     local data = string.format("%d,%.2f,%.2f,%.2f,%.2f\n", playerStamina, playerX, playerY, playerZ, playerAngle)
