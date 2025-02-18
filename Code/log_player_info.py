@@ -9,9 +9,9 @@ while True:
         with open(file_path, "r") as file:
             data = file.read().strip()
             if data:
-                health, stamina, x, y, z = map(float, data.split(","))
+                stamina, x, y, z, a = map(float, data.split(","))
                 print(
-                    f"Health: {health}, Stamina: {stamina}, X: {x}, Y: {y}, Z: {z}")
+                    f"Stamina: {stamina}, X: {x}, Y: {y}, Z: {z}, angle: {a}")
     except Exception as e:
         print(f"Error reading file: {e}")
 
