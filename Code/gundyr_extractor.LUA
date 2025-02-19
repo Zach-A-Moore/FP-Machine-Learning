@@ -1,11 +1,12 @@
 local file_path = "C:\\Users\\thanos\\OneDrive - MNSCU\\Desktop\\school\\dark_souls_ai_code\\FP-Machine-Learning\\Code\\gundyr_info.txt"  -- Change to your own path
 
 function updateValues()
-    local GUNDYR_HEALTH_PTR = "[[[[WorldChrMan]+80]+1F90]+18]+F0"
-    local GUNDYR_X_PTR = "[[[WorldChrMan]+40]+28]+80"
-    local GUNDYR_Z_PTR = "[[[WorldChrMan]+40]+28]+84"
-    local GUNDYR_Y_PTR = "[[[WorldChrMan]+40]+28]+88"
-    local GUNDYR_ANGLE_PTR = "[[[WorldChrMan]+40]+28]+74"
+    -- if player is locked onto Gundyr, these are his pointers
+    local GUNDYR_HEALTH_PTR = "[[[target_ptr]+1F90]+18]+D8"
+    local GUNDYR_X_PTR = "[[[[[target_ptr]+1F90]+68]+A8]+40]+70"
+    local GUNDYR_Z_PTR = "[[[[[target_ptr]+1F90]+68]+A8]+40]+74"
+    local GUNDYR_Y_PTR = "[[[[[target_ptr]+1F90]+68]+A8]+40]+7C"
+    local GUNDYR_ANGLE_PTR = "[[[[[target_ptr]+1F90]+68]+A8]+40]+70"
 
 
     local gundyrHealth = readInteger(GUNDYR_HEALTH_PTR) or -999
