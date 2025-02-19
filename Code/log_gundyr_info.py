@@ -11,7 +11,7 @@ while True:
             if data:
                 health, x, y, z, a = map(float, data.split(","))
                 print(
-                    f"Stamina: {health}, X: {x}, Y: {y}, Z: {z}, angle: {a}")
+                    f"Health: {health}, X: {x}, Y: {y}, Z: {z}, angle: {a}")
     except Exception as e:
         print(f"Error reading file: {e}")
 
