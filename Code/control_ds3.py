@@ -30,7 +30,21 @@ def move_right(duration=1.0):
     time.sleep(duration)
     keyboard.release('d')
 
+# Simulate interaction (E key)
 
+
+def interact():
+    keyboard.press('e')
+    time.sleep(0.2)
+    keyboard.release('e')
+
+# Simulate lock-on (Q key)
+
+
+def lock_on():
+    keyboard.press('q')
+    time.sleep(0.2)
+    keyboard.release('q')
 # Simulate attack (LMB)
 
 
