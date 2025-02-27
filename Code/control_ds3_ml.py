@@ -1,7 +1,7 @@
 import time
 import pyautogui
 from pynput.keyboard import Key, Controller
-from tensorflow.keras.models import load_model
+# from tensorflow.keras.models import load_model
 
 
 # Controller from pynput
@@ -9,12 +9,18 @@ keyboard = Controller()
 
 # Check if locked on to boss or not
 LockedOn = False
+estus = 3
 
 # Movement
-def move_forward():
+
+# TODO: RESET ESTUS
+
+
+def move_forward(duration=1.0):
     keyboard.press('w')
-    time.sleep(0.5) 
+    time.sleep(duration)
     keyboard.release('w')
+
 
 def move_backward(duration=1.0):
     keyboard.press('s')
@@ -35,55 +41,75 @@ def move_right(duration=1.0):
 
 # Actions
 
+
+def interact():
+    keyboard.press('e')
+    time.sleep(0.2)
+    keyboard.release('e')
+
+
+def lock_on():
+    keyboard.press('q')
+    time.sleep(0.2)
+    keyboard.release('q')
+
+
+def heal():
+    if estus == 0:
+        return
+    keyboard.press('r')
+    time.sleep(0.2)
+    keyboard.release('r')
+    estus -= 1
+
+
 def attack():
     pyautogui.click()
+
 
 def dodge():
     keyboard.press(Key.space)
     time.sleep(0.2)
     keyboard.release(Key.space)
 
-def LockOn():
-    if LockedOn == False:
-        keyboard.press('q')
-        time.sleep(0.2)
-        keyboard.release('q')
-    else:
-        return
+
+# def LockOn():
+#     if LockedOn == False:
+#         keyboard.press('q')
+#         time.sleep(0.2)
+#         keyboard.release('q')
+#     else:
+#         return
 
 
+# def main():
+#     # Same file as Cheat Engine script
+#     file_path = "C:\\Users\\Laween\\Downloads\\game_data.txt"
 
 
-def main():
-    # Same file as Cheat Engine script
-    file_path = "C:\\Users\\Laween\\Downloads\\game_data.txt"
+#     print("Listening for game data...")
+#     while True:
+#         try:
+#             with open(file_path, "r") as file:
+#                 data = file.read().strip()
+#                 if data:
+#                     health, stamina, x, y, z = map(float, data.split(","))
 
+#                     # Example AI logic (replace with ML model later)
+#                     if health < 50:
+#                         print("Low health! Dodging...")
+#                         dodge()
+#                     elif stamina > 30:
+#                         print("Attacking...")
+#                         attack()
+#                     else:
+#                         print("Moving forward...")
+#                         move_forward()
 
+#         except Exception as e:
+#             print(f"Error reading file: {e}")
 
-    print("Listening for game data...")
-    while True:
-        try:
-            with open(file_path, "r") as file:
-                data = file.read().strip()
-                if data:
-                    health, stamina, x, y, z = map(float, data.split(","))
-
-                    # Example AI logic (replace with ML model later)
-                    if health < 50:
-                        print("Low health! Dodging...")
-                        dodge()
-                    elif stamina > 30:
-                        print("Attacking...")
-                        attack()
-                    else:
-                        print("Moving forward...")
-                        move_forward()
-
-        except Exception as e:
-            print(f"Error reading file: {e}")
-
-        time.sleep(0.1)  # Adjust based on performance
-
+#         time.sleep(0.1)  # Adjust based on performance
 
 
 # model = load_model("ds3_ai_model.h5")  # Load trained AI
