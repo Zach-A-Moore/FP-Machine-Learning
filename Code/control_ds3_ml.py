@@ -1,11 +1,8 @@
 import time
 import pyautogui
-from pynput.keyboard import Key, Controller
+# replaced pynput keyboard with pyDirectInput
+import pydirectinput as direct_input
 # from tensorflow.keras.models import load_model
-
-
-# Controller from pynput
-keyboard = Controller()
 
 # Check if locked on to boss or not
 LockedOn = False
@@ -17,49 +14,50 @@ estus = 3
 
 
 def move_forward(duration=1.0):
-    keyboard.press('w')
+    direct_input.keyDown('w')
     time.sleep(duration)
-    keyboard.release('w')
+    direct_input.keyUp('w')
 
 
 def move_backward(duration=1.0):
-    keyboard.press('s')
+    direct_input.keyDown('s')
     time.sleep(duration)
-    keyboard.release('s')
+    direct_input.keyUp('s')
 
 
 def move_left(duration=1.0):
-    keyboard.press('a')
+    direct_input.keyDown('a')
     time.sleep(duration)
-    keyboard.release('a')
+    direct_input.keyUp('a')
 
 
 def move_right(duration=1.0):
-    keyboard.press('d')
+    direct_input.keyDown('d')
     time.sleep(duration)
-    keyboard.release('d')
+    direct_input.keyUp('d')
 
 # Actions
 
 
 def interact():
-    keyboard.press('e')
+    direct_input.keyDown('e')
     time.sleep(0.2)
-    keyboard.release('e')
+    direct_input.keyUp('e')
 
 
 def lock_on():
-    keyboard.press('q')
+    direct_input.keyDown('q')
     time.sleep(0.2)
-    keyboard.release('q')
+    direct_input.keyUp('q')
 
 
 def heal():
+    global estus
     if estus == 0:
         return
-    keyboard.press('r')
+    direct_input.keyDown('r')
     time.sleep(0.2)
-    keyboard.release('r')
+    direct_input.keyUp('r')
     estus -= 1
 
 
@@ -68,10 +66,24 @@ def attack():
 
 
 def dodge():
-    keyboard.press(Key.space)
+    direct_input.keyDown('space')
     time.sleep(0.2)
-    keyboard.release(Key.space)
+    direct_input.keyUp('space')
 
+# Helper functions
+
+
+def focus_on_game():
+    # Hold alt and press tab with extended delays
+    direct_input.keyDown('alt')
+    time.sleep(0.2)
+    direct_input.press('tab')
+    time.sleep(0.2)
+    direct_input.keyUp('alt')
+    time.sleep(0.3)  # give OS time to switch
+    # Release alt and tab keys
+    direct_input.keyUp('alt')
+    time.sleep(0.1)
 
 # def LockOn():
 #     if LockedOn == False:

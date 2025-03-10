@@ -1,0 +1,25 @@
+During_boss_battle+PTR = "[[GameDataMan]+C0]"
+
+
+player pointers:
+    local CURRENT_X_PTR = "[[[WorldChrMan]+40]+28]+80"
+    local CURRENT_Z_PTR = "[[[WorldChrMan]+40]+28]+84"
+    local CURRENT_Y_PTR = "[[[WorldChrMan]+40]+28]+88"
+    local CURRENT_ANGLE_PTR = "[[[WorldChrMan]+40]+28]+74"
+    local CURRENT_HEALTH_PTR = "[[[[WorldChrMan]+80]+1F90]+18]+D8"
+    local CURRENT_STAMINA_PTR = "[[[[WorldChrMan]+80]+1F90]+18]+F0"
+
+Gundyr state flags:
+    defeated_ptr = "[[[SprjEventFlagMan]+0]5A67]" -- bit 5
+    encountered_ptr = "[[[SprjEventFlagMan]+0]5A67]" -- bit 6
+    pulled_sword_out_ptr = "[[[SprjEventFlagMan]+0]5A67]" -- bit 7
+
+
+if lockedon then
+    local GUNDYR_HEALTH_PTR = "[[[target_ptr]+1F90]+18]+D8"
+    local GUNDYR_X_PTR = "[[[[[target_ptr]+1F90]+68]+A8]+40]+70"
+    local GUNDYR_Z_PTR = "[[[[[target_ptr]+1F90]+68]+A8]+40]+74"
+    local GUNDYR_Y_PTR = "[[[[[target_ptr]+1F90]+68]+A8]+40]+7C"
+    local GUNDYR_ANGLE_PTR = "[[[[[target_ptr]+1F90]+68]+A8]+40]+70"
+else default gundyr is:
+    GUNDYR_HEALTH_PTR = "[[[[[[[DarkSoulsIII.exe+049648F8]+98]+200]+28]+168]+10]+F0]+F28"
