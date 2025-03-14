@@ -1,0 +1,12 @@
+game_data
+player_info
+player_info.txt
+Code/player_info
+Code/player_info.txt
+gundyr_info.txt
+__pycache__/
+__pycache__/*.pyc
+.venv
+
+ml_env/
+.ml_env/

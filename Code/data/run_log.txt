@@ -1,0 +1,4 @@
+2025-03-09 22:09:11, Run: 1, Outcome: loss, Duration: 28 seconds, Final PlayerHP: 0, Final BossHP: 1037
+2025-03-09 22:10:51, Run: 2, Outcome: win, Duration: 78 seconds, Final PlayerHP: 454, Final BossHP: 0
+2025-03-09 22:11:18, Run: 3, Outcome: win, Duration: 2 seconds, Final PlayerHP: 590, Final BossHP: 0
+2025-03-09 22:12:01, Run: 4, Outcome: loss, Duration: 13 seconds, Final PlayerHP: 0, Final BossHP: 1037
