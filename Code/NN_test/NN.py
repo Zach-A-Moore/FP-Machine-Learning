@@ -57,9 +57,9 @@ def evaluate_model(model, X, y, dataset_name):
 def main():
     # File paths (adjust as needed)
     datasets = {
-        "Training Set": r"C:\Users\zacha\OneDrive\Desktop\FP databases\Code\NN_test\train_data.csv",
-        "Test Set 1": r"C:\Users\zacha\OneDrive\Desktop\FP databases\Code\NN_test\test_data2.csv",
-        "Test Set 2": r"C:\Users\zacha\OneDrive\Desktop\FP databases\Code\NN_test\test_data2.csv"
+        "Training Set": "train_data.csv",
+        "Test Set 1": "test_data2.csv",
+        "Test Set 2": "test_data2.csv"
     }
     
     # Load all datasets
