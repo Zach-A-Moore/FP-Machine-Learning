@@ -15,6 +15,7 @@ function updateValues()
     local GUNDYR_Z_PTR = "[[[[[target_ptr]+1F90]+68]+A8]+40]+74"
     local GUNDYR_Y_PTR = "[[[[[target_ptr]+1F90]+68]+A8]+40]+7C"
     local GUNDYR_ANGLE_PTR = "[[[[[target_ptr]+1F90]+68]+A8]+40]+70"
+    local CURRENT_ANIM_NAME_PTR = "[[[target_ptr]+1F90]+28]+898"
 
 
     local gundyrHealth = readInteger(GUNDYR_HEALTH_PTR) or -999
@@ -22,9 +23,10 @@ function updateValues()
     local gundyrY = readFloat(GUNDYR_Y_PTR) or -999.0
     local gundyrZ = readFloat(GUNDYR_Z_PTR) or -999.0
     local gundyrAngle = readFloat(GUNDYR_ANGLE_PTR) or -999.0
+    local gundyrAnim = readString(CURRENT_ANIM_NAME_PTR) or nil
 
     -- Format the data
-    local data = string.format("%d,%.2f,%.2f,%.2f,%.2f\n", gundyrHealth, gundyrX, gundyrY, gundyrZ, gundyrAngle)
+    local data = string.format("%d,%.2f,%.2f,%.2f,%.2f,%s\n", gundyrHealth, gundyrX, gundyrY, gundyrZ, gundyrAngle, gundyrAnim)
 
     -- Open file for writing
     local file = io.open(file_path, "w")
