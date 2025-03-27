@@ -41,9 +41,9 @@ def log_gundyr_info(isRunning):
             with open(file_path, "r") as file:
                 data = file.read().strip()
                 if data:
-                    health, x, y, z, a = map(float, data.split(","))
+                    health, x, y, z, a, anim = map(float, data.split(","))
                     print(
-                        f"Health: {health}, X: {x}, Y: {y}, Z: {z}, angle: {a}")
+                        f"Health: {health}, X: {x}, Y: {y}, Z: {z}, angle: {a}, animation: {anim}")
         except Exception as e:
             print(f"Error reading file: {e}")
 

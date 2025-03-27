@@ -3,5 +3,5 @@ Pillow>=8.0.0 // Pillow is for image processing.
 pynput>=1.7.3 // pynput is for controlling the mouse and keyboard.
 numpy>=1.19.4 // numpy is for numerical computing.
 tensorflow>=2.14.0 // tensorflow is for machine learning.
-
+gym>=0.18.3 // gym is for reinforcement learning.
 
