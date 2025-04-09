@@ -1,7 +1,7 @@
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
-import gym_wrapper
-import dark_souls_api
+import gym_wrapper_bk_1 as gym_wrapper
+import dark_souls_api_bk_1 as dark_souls_api
 if __name__ == "__main__":
     dark_souls_api.ready_for_training()
 

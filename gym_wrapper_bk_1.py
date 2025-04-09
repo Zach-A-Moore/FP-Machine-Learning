@@ -5,13 +5,13 @@ import time
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
 import os
-from dark_souls_api import reset_environment, step_environment, get_state, compute_reward, check_done
+from dark_souls_api_bk_1 import reset_environment, step_environment, get_state, compute_reward, check_done
 
 
 # class dark_souls_api:
 #     @staticmethod
 #     def reset_environment():
-#         """
+#          """
 #         Reset the game environment:
 #         - Teleport the player to just before the fog wall.
 #         - Step forward, press E to interact with the fog wall, and press Q to lock on.
@@ -216,7 +216,20 @@ if __name__ == "__main__":
     env = make_vec_env(lambda: DarkSoulsGundyrEnv(), n_envs=4)
 
     # Create the PPO model with the default MLP policy
-    model = PPO("MlpPolicy", env, verbose=1)
+    # model = PPO("MlpPolicy", env, verbose=1)
+    model = PPO(
+        "MlpPolicy",
+        env,
+        verbose=1,
+        learning_rate=3e-4,
+        n_steps=2048,
+        batch_size=64,
+        n_epochs=10,
+        gamma=0.99,
+        gae_lambda=0.95,
+        clip_range=0.2,
+    )
+
 
     # Train the model for a number of timesteps
     total_timesteps = 100000  # adjust as needed
