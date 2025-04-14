@@ -1,0 +1,2219 @@
+Im working on a PPO model that intercat with darksouls 3 and a cheat script. I need to understand the files and how they interact with eachother. this is the context to what i will send. This will mostly be used as a referemce and then we can go file by file together. 
+
+In a folder named archive their is many files but i will add the python and lau scripts below
+
+damage_checker.LUA (-- finish later
+
+if syntaxcheck then return end
+  print("--Taken damage logger started--")
+  igroTakenDamageLogger = true
+  
+  local CURRENT_HP_PTR = "[[[[WorldChrMan]+80]+1F90]+18]+D8"
+  
+  local function startDmgLogger(thread)
+    local tmpHp = 0
+    while(igroTakenDamageLogger) do
+      local currentHp = readInteger(CURRENT_HP_PTR)
+      if(currentHp ~= nil) then
+        if(tmpHp > currentHp and tmpHp - currentHp > 10) then
+          print("You lost "..tmpHp - currentHp.." HP")
+          if(currentHp < 1) then
+            print("Your died")
+          end
+        end
+        tmpHp = currentHp
+      end
+      sleep(100)
+    end
+  end
+  
+  createNativeThread(startDmgLogger)
+
+  )
+
+enviroment_reset.py (import time
+import os
+
+# File paths
+PLAYER_DATA_FILE = "data/player_info.txt"
+BOSS_DATA_FILE = "data/gundyr_info.txt"
+
+# Define the reset coordinates for the player (adjust these values as needed)
+TODO: make this refer to the lua script set_poisition.lua
+RESET_POSITION = {
+    "x": 100.0,  # Example value: change to your desired X coordinate
+    "y": 50.0,   # Example value: change to your desired Y coordinate
+    "z": 0.0     # Example value: change to your desired Z coordinate
+}
+
+def run_lua_script(script_path, params=""):
+    """
+    Executes a LUA script via Cheat Engine.
+    NOTE: The command below is a placeholder.
+          Replace 'cheatengine_command' and the parameter syntax
+          with the correct commands for your setup.
+    """
+    command = f"cheatengine_command --script {script_path} {params}"
+    print("Executing command:", command)
+    os.system(command)
+
+def reset_player():
+    """
+    Reset the player by teleporting to a preset location.
+    This function calls a LUA script (set_position.LUA) that should
+    read the provided parameters (x, y, z) and set the player's position.
+    """
+    print("Player health reached zero. Resetting player position...")
+    # Build command parameters; make sure your LUA script is designed to accept these
+    params = f"--x {RESET_POSITION['x']} --y {RESET_POSITION['y']} --z {RESET_POSITION['z']}"
+    run_lua_script("Code/set_position.LUA", params)
+    # Allow some time for the reset to take effect
+    time.sleep(1)
+
+def reset_boss():
+    """
+    Reset the boss encounter by reviving the boss and ensuring the sword is drawn.
+    You may need to create or modify a LUA script (e.g., revive_boss.LUA)
+    to enable the necessary Cheat Engine flags.
+    """
+    print("Boss health reached zero. Resetting boss encounter...")
+    # Run the LUA script that revives the boss and sets up the encounter.
+    # If you don't have one yet, create a script (e.g., Code/revive_boss.LUA) that:
+    #  - Revives Gundyr (or your designated boss)
+    #  - Sets the flag to indicate that the sword is already drawn
+    run_lua_script("Code/revive_boss.LUA")
+    time.sleep(1)
+
+def read_game_data(file_path):
+    """
+    Reads the first line of the given file and returns the data as a list.
+    Assumes the file is formatted as a CSV string.
+    """
+    try:
+        with open(file_path, 'r') as file:
+            line = file.readline().strip()
+            return line.split(',')
+    except Exception as e:
+        print("Error reading", file_path, ":", e)
+        return None
+
+def monitor_game():
+    """
+    Continuously monitors the player's and boss's health.
+    If the player or boss is determined to be "dead" (health <= 0),
+    the appropriate reset function is triggered.
+    """
+    while True:
+        player_data = read_game_data(PLAYER_DATA_FILE)
+        boss_data = read_game_data(BOSS_DATA_FILE)
+        
+        if player_data and boss_data:
+            try:
+                # Assuming the first value in each file is the health.
+                player_health = float(player_data[0])
+                boss_health = float(boss_data[0])
+                
+                if player_health <= 0:
+                    reset_player()
+                if boss_health <= 0:
+                    reset_boss()
+            except Exception as e:
+                print("Error parsing game data:", e)
+        time.sleep(0.1)  # 100ms delay to match your data logging rate
+
+if __name__ == "__main__":
+    monitor_game()
+)
+
+grundyr_extractor.LUA (-- local file_path = "C:\\Users\\thanos\\OneDrive - MNSCU\\Desktop\\school\\dark_souls_ai_code\\FP-Machine-Learning\\Code\\gundyr_info.txt"  -- Ben's path
+-- local lab_file_path = "C:\\Users\\Zach\\Desktop\\Souls\\FP-Machine-Learning\\Code\\player_info.txt" -- Zach's path
+local file_path = "C:\\Users\\Laween\\OneDrive\\Desktop\\MSUM\\Spring_2025\\490\\Final_Project\\Dark_Souls\\FP-Machine-Learning\\Code\\data\\gundyr_info.txt" -- Laween's path
+
+function updateValues()
+    -- if player is locked onto Gundyr, these are his pointers
+    local GUNDYR_HEALTH_PTR = "[[[target_ptr]+1F90]+18]+D8"
+    local GUNDYR_X_PTR = "[[[[[target_ptr]+1F90]+68]+A8]+40]+70"
+    local GUNDYR_Z_PTR = "[[[[[target_ptr]+1F90]+68]+A8]+40]+74"
+    local GUNDYR_Y_PTR = "[[[[[target_ptr]+1F90]+68]+A8]+40]+7C"
+    local GUNDYR_ANGLE_PTR = "[[[[[target_ptr]+1F90]+68]+A8]+40]+70"
+
+
+    local gundyrHealth = readInteger(GUNDYR_HEALTH_PTR) or -999
+    local gundyrX = readFloat(GUNDYR_X_PTR) or -999.0
+    local gundyrY = readFloat(GUNDYR_Y_PTR) or -999.0
+    local gundyrZ = readFloat(GUNDYR_Z_PTR) or -999.0
+    local gundyrAngle = readFloat(GUNDYR_ANGLE_PTR) or -999.0
+
+    -- Format the data
+    local data = string.format("%d,%.2f,%.2f,%.2f,%.2f\n", gundyrHealth, gundyrX, gundyrY, gundyrZ, gundyrAngle)
+
+    -- Open file for writing
+    local file = io.open(file_path, "w")
+    if file then
+        file:write(data)
+        file:close()
+    end
+end
+
+if myTimer then
+    myTimer.destroy()
+end
+
+myTimer = createTimer(nil, false)
+myTimer.Interval = 100  -- in ms
+myTimer.OnTimer = updateValues
+myTimer.setEnabled(true)
+)
+
+player_extractor.LUA (-- local file_path = "C:\\Users\\thanos\\OneDrive - MNSCU\\Desktop\\school\\dark_souls_ai_code\\FP-Machine-Learning\\Code\\player_info.txt"  -- Ben's path
+-- local file_path = "C:\\Users\\Zach\\Desktop\\Souls\\FP-Machine-Learning\\Code\\player_info.txt" -- Zach's path
+local file_path = "C:\\Users\\Laween\\OneDrive\\Desktop\\MSUM\\Spring_2025\\490\\Final_Project\\Dark_Souls\\FP-Machine-Learning\\Code\\data\\player_info.txt" -- Laween's path
+
+function updateValues()
+    local CURRENT_X_PTR = "[[[WorldChrMan]+40]+28]+80"
+    local CURRENT_Z_PTR = "[[[WorldChrMan]+40]+28]+84"
+    local CURRENT_Y_PTR = "[[[WorldChrMan]+40]+28]+88"
+    local CURRENT_ANGLE_PTR = "[[[WorldChrMan]+40]+28]+74"
+    local CURRENT_HEALTH_PTR = "[[[[WorldChrMan]+80]+1F90]+18]+D8"
+    local CURRENT_STAMINA_PTR = "[[[[WorldChrMan]+80]+1F90]+18]+F0"
+    local CURRENT_ESTUS_PTR = "[[WorldChrMan]+10]+5AC"
+    -- local CURRENT_ESTUS_PTR = "[[[[WorldChrMan]+80]+1F90]+18]+E0"
+
+    -- We don't need health, just use the damage taken logger
+
+    local playerStamina = readInteger(CURRENT_STAMINA_PTR) or -999
+    -- this if statement makes sure that stamina doesn't act weird
+    if playerStamina > 10000 then
+        playerStamina = 0
+    end
+    local playerX = readFloat(CURRENT_X_PTR) or -999.0
+    local playerY = readFloat(CURRENT_Y_PTR) or -999.0
+    local playerZ = readFloat(CURRENT_Z_PTR) or -999.0
+    local playerAngle = readFloat(CURRENT_ANGLE_PTR) or -999.0
+    local playerHealth = readInteger(CURRENT_HEALTH_PTR) or -999
+    local playerEstus = readInteger(CURRENT_ESTUS_PTR) or -999
+
+
+    -- Format the data
+    local data = string.format("%d,%d,%d,%.2f,%.2f,%.2f,%.2f\n",  playerHealth, playerStamina, playerEstus, playerX, playerY, playerZ, playerAngle)
+
+    -- Open file for writing
+    local file = io.open(file_path, "w")
+    if file then
+        file:write(data)
+        file:close()
+    end
+end
+
+if myTimer then
+    myTimer.destroy()
+end
+
+myTimer = createTimer(nil, false)
+myTimer.Interval = 100  -- in ms
+myTimer.OnTimer = updateValues
+myTimer.setEnabled(true)
+
+)
+
+set_position.LUA (-- initial position pointer
+local INITPOS_PTR = getAddress("[GameMan]+A40")
+
+-- array of good initial position
+-- TODO: make sure the desired position is not too close tothe fog wall
+local desiredPosition = {0xA8, 0x18, 0xFB, 0x42, 0xD6, 0x19, 0x80, 0xC2, 0x1E, 0xD0, 0x0B, 0x44}
+
+-- get the current initial position
+local currentPosition = readBytes(INITPOS_PTR, #desiredPosition, true)
+
+-- check if they match
+local match = true
+for i = 1, #desiredPosition do
+    if currentPosition[i] ~= desiredPosition[i] then
+        match = false
+        break
+    end
+end
+
+-- update if there's no match
+if not match then
+    writeBytes(INITPOS_PTR, table.unpack(desiredPosition))
+    print("Memory updated to desired byte array.")
+else
+    print("Memory already matches desired value.")
+end)
+
+That is then end of the archive file
+
+then there is a data file with txt files
+
+After that the main code
+
+Boss_Reset.lua ([ENABLE]
+{$lua}
+
+-- 1) Define pointer strings
+local PLAYER_HEALTH_PTR_STR = "[[[[WorldChrMan]+80]+1F90]+18]+D8"
+local BOSS_HEALTH_PTR_STR   = "[[[[[[[DarkSoulsIII.exe+049648F8]+98]+200]+28]+168]+10]+F0]+F28"  -- uses target_ptr from "Target Entity Info"
+local BOSS_FLAGS_PTR        = "[[SprjEventFlagMan]+0]+5A67"
+
+-- 2) killPlayer function (must come before reviveBoss so it's not nil)
+local function killPlayer()
+  local curHPAddr = getAddress(PLAYER_HEALTH_PTR_STR)
+  if not curHPAddr or curHPAddr == 0 then
+    print("[BossReset] ERROR: Could not find player HP pointer.")
+    return
+  end
+  -- Wait 5 seconds, then set HP to 0
+  sleep(5000)
+  writeInteger(curHPAddr, 0)
+  print("[BossReset] Player killed (HP set to 0).")
+end
+
+-- 3) reviveBoss function
+local function reviveBoss()
+  local BOSS_FLAGS_ADDR = getAddress(BOSS_FLAGS_PTR)
+  -- Read a single byte (3rd param omitted => integer instead of table)
+  local currentValue = readBytes(BOSS_FLAGS_ADDR, 1)
+  if not currentValue then
+    print("[BossReset] ERROR: Could not read boss flags.")
+    return
+  end
+
+local al = getAddressList()
+  local Rez = al.getMemoryRecordByDescription("Resurrect all Bosses")
+if Rez then
+  Rez.Active = true
+  print("All Bosses Resurrected!")
+end
+  -- Clear bit 7 (Defeated) and set bits 6 & 5 (Encountered + Pulled Sword Out)
+  currentValue = currentValue & 0x7F  -- Clear bit 7
+  currentValue = currentValue | 0x60  -- Set bits 6 and 5
+
+  writeBytes(BOSS_FLAGS_ADDR, currentValue)
+  print(string.format("[BossReset] Boss revived. New flags = 0x%X", currentValue))
+
+  -- Double-check the new value. If it matches, kill the player
+--  local newVal = readBytes(BOSS_FLAGS_ADDR, 1)
+--  if newVal == currentValue then
+--    killPlayer()
+--  else
+--    print("[BossReset] Boss flags not updated. Not killing player.")
+--  end
+end
+
+-- 4) Track death times to add a delay
+local bossDeathTime = nil
+
+-- 5) Main loop that checks health and triggers resets
+local function checkAndReset()
+  local bossHPAddr = getAddress(BOSS_HEALTH_PTR_STR)
+  if not bossHPAddr or bossHPAddr == 0 then
+    print("[BossReset] Boss pointer invalid. Possibly wrong pointer.")
+    return
+  end
+
+  -- Read health
+  local bHP = readInteger(bossHPAddr) or -1
+  print(string.format("[BossReset] Checking BossHP=%d", bHP))
+
+  -- Boss death => wait 5s => revive
+  if bHP == 0 then
+    if not bossDeathTime then
+      bossDeathTime = os.time()
+      print("[BossReset] Boss death detected. Waiting 5s before revive.")
+    elseif os.time() - bossDeathTime >= 5 then
+      reviveBoss()
+      killPlayer()
+      bossDeathTime = nil
+    end
+  end
+end
+
+-- 6) Create and enable a timer that checks every 1000ms
+bossResetTimer = createTimer(nil, false)
+bossResetTimer.Interval = 1000
+bossResetTimer.OnTimer = checkAndReset
+bossResetTimer.setEnabled(true)
+print("[BossReset] Timer enabled. Boss reset script active.")
+
+{$asm}
+
+[DISABLE]
+{$lua}
+-- Cleanup
+if bossResetTimer then
+  bossResetTimer.destroy()
+  bossResetTimer = nil
+end
+{$asm}
+)
+
+control_ds3_ml.py (import time
+import pyautogui
+# replaced pynput keyboard with pyDirectInput
+import pydirectinput as direct_input
+# from tensorflow.keras.models import load_model
+
+# Check if locked on to boss or not
+LockedOn = False
+estus = 3
+
+# Movement
+
+# TODO: RESET ESTUS
+
+
+def move_forward(duration=1.0):
+    direct_input.keyDown('w')
+    time.sleep(duration)
+    direct_input.keyUp('w')
+
+
+def move_backward(duration=1.0):
+    direct_input.keyDown('s')
+    time.sleep(duration)
+    direct_input.keyUp('s')
+
+
+def move_left(duration=1.0):
+    direct_input.keyDown('a')
+    time.sleep(duration)
+    direct_input.keyUp('a')
+
+
+def move_right(duration=1.0):
+    direct_input.keyDown('d')
+    time.sleep(duration)
+    direct_input.keyUp('d')
+
+# Actions
+
+
+def interact():
+    direct_input.keyDown('e')
+    time.sleep(0.2)
+    direct_input.keyUp('e')
+
+
+def lock_on():
+    direct_input.keyDown('q')
+    time.sleep(0.2)
+    direct_input.keyUp('q')
+
+
+def heal():
+    global estus
+    if estus == 0:
+        return
+    direct_input.keyDown('r')
+    time.sleep(0.2)
+    direct_input.keyUp('r')
+    estus -= 1
+
+
+def attack():
+    pyautogui.click()
+
+
+def dodge():
+    direct_input.keyDown('space')
+    time.sleep(0.2)
+    direct_input.keyUp('space')
+
+# Helper functions
+
+
+def focus_on_game():
+    # Hold alt and press tab with extended delays
+    direct_input.keyDown('alt')
+    time.sleep(0.2)
+    direct_input.press('tab')
+    time.sleep(0.2)
+    direct_input.keyUp('alt')
+    time.sleep(0.3)  # give OS time to switch
+    # Release alt and tab keys
+    direct_input.keyUp('alt')
+    time.sleep(0.1)
+
+# def LockOn():
+#     if LockedOn == False:
+#         keyboard.press('q')
+#         time.sleep(0.2)
+#         keyboard.release('q')
+#     else:
+#         return
+
+
+# def main():
+#     # Same file as Cheat Engine script
+#     file_path = "C:\\Users\\Laween\\Downloads\\game_data.txt"
+
+
+#     print("Listening for game data...")
+#     while True:
+#         try:
+#             with open(file_path, "r") as file:
+#                 data = file.read().strip()
+#                 if data:
+#                     health, stamina, x, y, z = map(float, data.split(","))
+
+#                     # Example AI logic (replace with ML model later)
+#                     if health < 50:
+#                         print("Low health! Dodging...")
+#                         dodge()
+#                     elif stamina > 30:
+#                         print("Attacking...")
+#                         attack()
+#                     else:
+#                         print("Moving forward...")
+#                         move_forward()
+
+#         except Exception as e:
+#             print(f"Error reading file: {e}")
+
+#         time.sleep(0.1)  # Adjust based on performance
+
+
+# model = load_model("ds3_ai_model.h5")  # Load trained AI
+
+# def predict_action(health, stamina, x, y, z):
+#     input_data = [[health, stamina, x, y, z]]
+#     action_index = model.predict(input_data).argmax()
+#     return ["move", "attack", "dodge"][action_index]  # Example action list
+# action = predict_action(health, stamina, x, y, z)
+# if action == "move":
+#     move_forward()
+# elif action == "attack":
+#     attack()
+# elif action == "dodge":
+#     dodge()
+)
+
+control_ds3.py (import time
+import pyautogui
+from pynput.keyboard import Key, Controller
+
+keyboard = Controller()
+
+# Simulate movement
+
+
+def move_forward(duration=1.0):
+    keyboard.press('w')
+    time.sleep(duration)
+    keyboard.release('w')
+
+
+def move_backward(duration=1.0):
+    keyboard.press('s')
+    time.sleep(duration)
+    keyboard.release('s')
+
+
+def move_left(duration=1.0):
+    keyboard.press('a')
+    time.sleep(duration)
+    keyboard.release('a')
+
+
+def move_right(duration=1.0):
+    keyboard.press('d')
+    time.sleep(duration)
+    keyboard.release('d')
+
+# Simulate interaction (E key)
+
+
+def interact():
+    keyboard.press('e')
+    time.sleep(0.2)
+    keyboard.release('e')
+
+# Simulate lock-on (Q key)
+
+
+def lock_on():
+    keyboard.press('q')
+    time.sleep(0.2)
+    keyboard.release('q')
+# Simulate attack (LMB)
+
+
+def attack():
+    pyautogui.click()
+
+# Simulate dodge (Roll - B button on Xbox, Space on PC)
+
+
+def dodge():
+    keyboard.press(Key.space)
+    time.sleep(0.2)
+    keyboard.release(Key.space)
+
+
+# Example usage
+if __name__ == "__main__":
+    time.sleep(3)  # Gives you 3 seconds to switch to the game
+    move_forward(2)  # Move forward for 2 seconds
+    attack()  # Attack
+    attack()  # Attack
+    dodge()  # Dodge
+    move_left(3)  # Move left for 1 second
+    move_right(1)  # Move right for 1 second
+    move_backward(1)  # Move backward for 1 second
+    attack()  # Attack
+)
+
+coordinate_converter.py (import math
+import argparse
+
+
+def calculate_relative_vector(player, boss):
+    # Unpack positions and angles (angle is not used in the vector calculation)
+    player_x, player_y, player_z, player_angle = player
+    boss_x, boss_y, boss_z, boss_angle = boss
+
+    # Compute displacement vector components
+    dx = boss_x - player_x
+    dy = boss_y - player_y
+    dz = boss_z - player_z
+
+    # Euclidean distance between player and boss
+    distance = math.sqrt(dx**2 + dy**2 + dz**2)
+
+    # Compute the horizontal angle (in degrees) that the player must face
+    # using the x and z components; adjust as needed if your coordinate system differs.
+    target_angle = math.degrees(math.atan2(dz, dx))
+
+    return (dx, dy, dz), distance, target_angle
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Convert player and boss coordinates into a relative vector."
+    )
+    parser.add_argument(
+        "--player", nargs=4, type=float, required=True,
+        help="Player x y z angle"
+    )
+    parser.add_argument(
+        "--boss", nargs=4, type=float, required=True,
+        help="Boss x y z angle"
+    )
+    args = parser.parse_args()
+
+    player = args.player
+    boss = args.boss
+
+    relative_vector, distance, target_angle = calculate_relative_vector(
+        player, boss)
+
+    print("Relative vector (from player to boss):", relative_vector)
+    print("Distance between player and boss:", distance)
+    print("Player should face angle (degrees):", target_angle)
+
+
+if __name__ == '__main__':
+    main()
+)
+
+enable_flags.lua (-- copy of enable_flags.lua that refers to the one in autorun
+-- enable_flags.lua
+
+
+--  Load the main table 
+loadTable("C:\\Users\\Laween\\OneDrive\\Desktop\\MSUM\\Spring_2025\\490\\Final_Project\\Dark_Souls\\FP-Machine-Learning\\DS3_Table_V1.CT")
+
+
+-------------------------------------
+-- Enables Main Script
+-------------------------------------
+local al = getAddressList()
+local mainScript = al.getMemoryRecordByDescription("Open - The Grand Archives v3.4.0 - Dark Souls III v1.15.2")
+if mainScript then
+  mainScript.Active = true
+  print("Main Script enabled!")
+end
+
+-- EVERYTHING IS IN PREP NOW SO NO NEED TO ENABLE THESE
+--------------------------------------------------------------------------
+-- -------------------------------------
+-- -- Teleport to Boss
+-- -------------------------------------
+-- local TP = al.getMemoryRecordByDescription("TP to Boss")
+-- if TP then
+--   TP.Active = true
+--   print("Teleported Sucessfully!")
+-- end
+
+-- -------------------------------------
+-- -- Kills all mobs
+-- -------------------------------------
+-- local killMobs = al.getMemoryRecordByDescription("Kill All Mobs")
+-- if killMobs then
+--   killMobs.Active = true
+--   print("All Mobs have been killed!")
+-- end
+
+
+-- -- -------------------------------------
+-- -- -- Set LockOn Range to 100.0 (DEPRECATED)
+-- -- -------------------------------------
+-- -- local LOCKON_RANGE_PTR_STR = "[[DarkSoulsIII.exe+477DBE0]+2914]"
+-- -- local lockonRangeAddr = getAddress(LOCKON_RANGE_PTR_STR)
+-- -- if lockonRangeAddr then
+-- --   writeFloat(lockonRangeAddr, 100.0)
+-- --   print("LockOn Range set to 100.0")
+-- -- else
+-- --   print("LockOn Range pointer not resolved.")
+-- -- end
+
+-- -------------------------------------
+-- -- Set LockOn Range to 100.0 
+-- -------------------------------------
+-- local lockOnRec = al.getMemoryRecordByDescription("IncreaseLockOn Range")
+-- if lockOnRec then
+--   lockOnRec.Active = true
+--   print("IncreaseLockOn Range enabled!")
+-- end
+--------------------------------------------------------------------------
+
+-------------------------------------
+-- Prepare the setup
+-------------------------------------
+local Prep = al.getMemoryRecordByDescription("Prep")
+if Prep then
+  Prep.Active = true
+  print("Prep enabled!")
+end
+
+-------------------------------------
+-- Enables Player Logger 
+-------------------------------------
+local playerLogger = al.getMemoryRecordByDescription("Player Logger")
+if playerLogger then
+  playerLogger.Active = true
+  print("Player Logger enabled!")
+end
+
+-------------------------------------
+-- Enables Gundyr Logger 
+-------------------------------------
+local gundyrLogger = al.getMemoryRecordByDescription("Gundyr Logger")
+if gundyrLogger then
+  gundyrLogger.Active = true
+  print("Gundyr Logger enabled!")
+end
+
+-------------------------------------
+-- Enables GameManager Logger 
+-------------------------------------
+local gm = al.getMemoryRecordByDescription("Game Manager")
+if gm then
+  gm.Active = true
+  print("Game Manager enabled!")
+end
+
+-----------------------------------
+-- Resets the player's position to the specified coordinates after death
+-----------------------------------
+local Player_Reset = al.getMemoryRecordByDescription("Player Reset")
+if Player_Reset then
+  Player_Reset.Active = true
+  print("Player Reset enabled!")
+end
+
+-----------------------------------
+-- Resets the boss's flags after death
+-----------------------------------
+local Boss_Reset = al.getMemoryRecordByDescription("Boss Reset")
+if Boss_Reset then
+  Boss_Reset.Active = true
+  print("Boss Reset enabled!")
+end
+
+
+print("All cheat engine flags/scripts enabled!")
+
+)
+
+Game_Manager.lua ([ENABLE]
+{$lua}
+
+-- Log file path (adjust as needed)
+local file_path = "C:\\Users\\Laween\\OneDrive\\Desktop\\MSUM\\Spring_2025\\490\\Final_Project\\Dark_Souls\\FP-Machine-Learning\\Code\\data\\run_log.txt"
+
+-- Pointer strings (adjust these for your DS3 version)
+local PLAYER_HEALTH_PTR_STR = "[[[[WorldChrMan]+80]+1F90]+18]+D8"
+local BOSS_HEALTH_PTR_STR   = "[[[[[[[DarkSoulsIII.exe+049648F8]+98]+200]+28]+168]+10]+F0]+F28"
+
+-- Counters and run state variables
+local runCount = 0
+local winCount = 0
+local lossCount = 0
+local runInProgress = false
+local runStartTime = nil
+
+-- Log a run to the file in append mode.
+local function logRun(outcome, duration, finalPlayerHP, finalBossHP)
+    local file = io.open(file_path, "a")
+    if file then
+        local timestamp = os.date("%Y-%m-%d %H:%M:%S")
+        local line = string.format("%s, Run: %d, Outcome: %s, Duration: %d seconds, Final PlayerHP: %d, Final BossHP: %d\n",
+                        timestamp, runCount, outcome, duration, finalPlayerHP, finalBossHP)
+        file:write(line)
+        file:close()
+        print("[GameManager] Logged run: " .. line)
+    else
+        print("[GameManager] ERROR: Could not open log file for appending.")
+    end
+end
+
+-- Main function that checks the run state every second.
+local function checkRun()
+    local playerHPAddr = getAddress(PLAYER_HEALTH_PTR_STR)
+    local bossHPAddr   = getAddress(BOSS_HEALTH_PTR_STR)
+    if not playerHPAddr or not bossHPAddr then
+         print("[GameManager] ERROR: Could not resolve one or more pointers.")
+         return
+    end
+
+    local playerHP = readInteger(playerHPAddr) or -1
+    local bossHP   = readInteger(bossHPAddr)   or -1
+
+    -- If both are alive and a run hasn't started, start a new run.
+    if playerHP > 0 and bossHP > 0 and not runInProgress then
+         runInProgress = true
+         runStartTime = os.time()
+         print("[GameManager] New run started at " .. os.date("%X", runStartTime))
+    end
+
+    -- If a run is in progress and one of them dies, the run is over.
+    if runInProgress and (playerHP <= 0 or bossHP <= 0) then
+         runCount = runCount + 1
+         local outcome = ""
+         if bossHP <= 0 then
+             outcome = "win"
+             winCount = winCount + 1
+         elseif playerHP <= 0 then
+             outcome = "loss"
+             lossCount = lossCount + 1
+         end
+         local duration = os.time() - runStartTime
+         print(string.format("[GameManager] Run over: Outcome: %s, Duration: %d seconds", outcome, duration))
+         logRun(outcome, duration, playerHP, bossHP)
+         runInProgress = false
+         runStartTime = nil
+    end
+end
+
+-- Create and enable a timer that calls checkRun() every 1 second.
+gameManagerTimer = createTimer(nil, false)
+gameManagerTimer.Interval = 1000  -- 1000ms = 1 second
+gameManagerTimer.OnTimer = checkRun
+gameManagerTimer.setEnabled(true)
+print("[GameManager] Timer enabled. Game manager active.")
+
+{$asm}
+
+[DISABLE]
+{$lua}
+if gameManagerTimer then
+    gameManagerTimer.destroy()
+    gameManagerTimer = nil
+end
+{$asm}
+)
+
+game_manager.py (import time
+import os
+import start_fight
+# File paths for  game data
+PLAYER_INFO_PATH = "data\\player_info.txt"
+GUNDYR_INFO_PATH = "data\\gundyr_info.txt"
+
+# Global counters for tracking wins and losses
+wins = 0
+losses = 0
+estus = 3
+
+
+def run_lua_script(script_path, params=""):
+    """
+    Executes a LUA script via Cheat Engine.
+    NOTE: Replace 'cheatengine_command' with the actual command for your setup.
+    """
+    command = f"cheatengine_command --script {script_path} {params}"
+    print("Executing command:", command)
+    os.system(command)
+
+
+def auto_enable_flags():
+    """
+    Auto-enables the cheat engine flags by running a LUA script that sets your custom flags.
+    Create a LUA script (e.g., Code/enable_flags.lua) that checks the table and enables your two custom flags.
+    """
+    print("Auto-enabling cheat engine flags...")
+    run_lua_script("enable_flags.lua")
+    time.sleep(1)
+
+
+def reset_player():
+    """
+    Resets the player's position using your set_position.lua script.
+    Also resets the estus count to 3 (as you plan to track it manually).
+    """
+    print("Player defeated! Resetting player position...")
+    run_lua_script("set_position.lua")
+    # TODO: Reset estus manually if needed:
+    # TODO: reset lock on range to 100 again
+    # TODO: Move postion
+    print("Resetting Estus count to 3.")
+    time.sleep(1)
+
+
+def reset_boss():
+    """
+    Resets the boss encounter by reviving the boss and ensuring the sword is drawn.
+    Create a LUA script (e.g., Code/revive_boss.lua) that does this.
+    """
+    print("Boss defeated! Resetting boss encounter...")
+    run_lua_script("revive_boss.lua")
+    time.sleep(1)
+
+
+def get_player_data():
+    """
+    Reads the player info file and returns a dictionary.
+    Expected format: health, stamina, estus, x, y, z, angle
+    """
+    try:
+        with open(PLAYER_INFO_PATH, 'r') as f:
+            data = f.read().strip()
+        if data:
+            parts = data.split(',')
+            return {
+                "health": float(parts[0]),
+                "stamina": float(parts[1]),
+                # Manual tracking; default is 3 at reset.
+                "estus": int(parts[2]),
+                "x": float(parts[3]),
+                "y": float(parts[4]),
+                "z": float(parts[5]),
+                "angle": float(parts[6])
+            }
+    except Exception as e:
+        print("Error reading player info:", e)
+    return None
+
+
+def get_gundyr_data():
+    """
+    Reads the Gundyr (boss) info file and returns a dictionary.
+    Expected format: health, x, y, z, angle
+    """
+    try:
+        with open(GUNDYR_INFO_PATH, 'r') as f:
+            data = f.read().strip()
+        if data:
+            parts = data.split(',')
+            return {
+                "health": float(parts[0]),
+                "x": float(parts[1]),
+                "y": float(parts[2]),
+                "z": float(parts[3]),
+                "angle": float(parts[4])
+            }
+    except Exception as e:
+        print("Error reading Gundyr info:", e)
+    return None
+
+
+def monitor_fight():
+    """
+    Monitors the fight: starts a timer at fight initiation and continuously checks player and boss health.
+    If the player's health falls to zero or below, a loss is recorded and the player reset is called.
+    If the boss's health falls to zero or below, a victory is recorded and the boss reset is called.
+    """
+    global wins, losses
+    fight_active = True
+    start_time = time.time()
+    print("Fight started.")
+
+    while fight_active:
+        player = get_player_data()
+        boss = get_gundyr_data()
+        if player is None or boss is None:
+            time.sleep(0.1)
+            continue
+
+        # Check for defeat conditions
+        if player["health"] <= 0:
+            print("Player health is 0 or less.")
+            losses += 1
+            duration = time.time() - start_time
+            print(
+                f"Fight duration: {duration:.2f} seconds. Total Losses: {losses}")
+            # reset_player() # FIXME: Uncomment this line when you have the reset_player function ready.
+            fight_active = False
+            start_fight.isrunning = False
+        elif boss["health"] <= 0:
+            print("Boss health is 0 or less.")
+            wins += 1
+            duration = time.time() - start_time
+            print(
+                f"Fight duration: {duration:.2f} seconds. Total Wins: {wins}")
+            reset_boss() #FIXME: Uncomment this line when you have the reset_boss function ready.
+            fight_active = False
+            start_fight.isrunning = False
+
+        time.sleep(0.1)  # Matches your data logging rate
+
+
+def main():
+    """
+    Main loop: Auto-enables cheat engine flags once and then continuously runs fight cycles.
+    In a full implementation, you’d call your fight-start functions (move_forward, enter_fog, lock_on)
+    before entering the fight monitoring loop.
+    """
+    # Enable cheat engine table flags automatically.
+    # FIXME: Uncomment this line when you have the enable_flags.lua script ready.
+    # auto_enable_flags()
+
+    while True:
+        print("Starting a new fight cycle...")
+        start_fight.main()
+        # At this point you could call functions to:
+        # - Move forward
+        # - Interact with the fog wall
+        # - Lock on to the boss
+        # (These actions are handled in your start_fight script.)
+        monitor_fight()
+        print("Reset complete. Preparing for next fight cycle.\n")
+        time.sleep(2)  # Pause before starting the next cycle
+
+
+if __name__ == "__main__":
+    main()
+)
+
+gundyr_logger.LUA ([ENABLE]
+{$lua}
+-- Destroy any previous timer if it exists
+if myTimer then
+    myTimer.destroy()
+end
+-- local file_path = "C:\\Users\\thanos\\OneDrive - MNSCU\\Desktop\\school\\dark_souls_ai_code\\FP-Machine-Learning\\Code\\gundyr_info.txt"  -- Ben's path
+-- local lab_file_path = "C:\\Users\\Zach\\Desktop\\Souls\\FP-Machine-Learning\\Code\\player_info.txt" -- Zach's path
+local file_path = "C:\\Users\\Laween\\OneDrive\\Desktop\\MSUM\\Spring_2025\\490\\Final_Project\\Dark_Souls\\FP-Machine-Learning\\Code\\data\\gundyr_info.txt" -- Laween's path
+
+function updateValues()
+    -- if player is locked onto Gundyr, these are his pointers
+    local GUNDYR_HEALTH_PTR = "[[[target_ptr]+1F90]+18]+D8"
+    local GUNDYR_X_PTR = "[[[[[target_ptr]+1F90]+68]+A8]+40]+70"
+    local GUNDYR_Z_PTR = "[[[[[target_ptr]+1F90]+68]+A8]+40]+74"
+    local GUNDYR_Y_PTR = "[[[[[target_ptr]+1F90]+68]+A8]+40]+7C"
+    local GUNDYR_ANGLE_PTR = "[[[[[target_ptr]+1F90]+68]+A8]+40]+70"
+    local CURRENT_ANIM_NAME_PTR = "[[[target_ptr]+1F90]+28]+898"
+
+
+    local gundyrHealth = readInteger(GUNDYR_HEALTH_PTR) or -999
+    local gundyrX = readFloat(GUNDYR_X_PTR) or -999.0
+    local gundyrY = readFloat(GUNDYR_Y_PTR) or -999.0
+    local gundyrZ = readFloat(GUNDYR_Z_PTR) or -999.0
+    local gundyrAngle = readFloat(GUNDYR_ANGLE_PTR) or -999.0
+    local gundyrAnim = readString(CURRENT_ANIM_NAME_PTR) or nil
+
+    -- Format the data
+    local data = string.format("%d,%.2f,%.2f,%.2f,%.2f,%s\n", gundyrHealth, gundyrX, gundyrY, gundyrZ, gundyrAngle, gundyrAnim)
+
+    -- Open file for writing
+    local file = io.open(file_path, "w")
+    if file then
+        file:write(data)
+        file:close()
+    end
+end
+
+
+myTimer = createTimer(nil, false)
+myTimer.Interval = 100  -- in ms
+myTimer.OnTimer = updateValues
+myTimer.setEnabled(true)
+{$asm}
+
+
+[DISABLE]
+{$lua}
+-- Destroy the timer when disabling the script
+if myTimer then
+    myTimer.destroy()
+    myTimer = nil
+end
+{$asm}
+
+)
+
+increase_lockon_range.lua ([ENABLE]
+{$lua}
+local bossBattleAddr = getAddress("[[GameDataMan]+C0]")
+local playerHPAddr   = getAddress("[[[[WorldChrMan]+80]+1F90]+18]+D8")
+
+local inBossFight = readByte(bossBattleAddr) or 0
+local playerHP    = readInteger(playerHPAddr) or 0
+
+
+if inBossFight == 0 and playerHP > 0 then
+
+local al = getAddressList()
+local lockOnRec = al.getMemoryRecordByDescription("Increase LockOn Range")
+if lockOnRec then
+  lockOnRec.Value = "100"
+  lockOnRec.Frozen = true
+  print("[IncreaseLockOnRange] Successfully froze lock-on range at 100.")
+else
+  print("[IncreaseLockOnRange] ERROR: Memory record 'Increase LockOn Range' not found!")
+end
+end
+{$asm}
+
+[DISABLE]
+{$lua}
+local al = getAddressList()
+local lockOnRec = al.getMemoryRecordByDescription("Increase LockOn Range")
+if lockOnRec then
+  lockOnRec.Frozen = false
+  lockOnRec.Value = "0"
+  print("[IncreaseLockOnRange] Lock-on range unfrozen and set to 0.")
+end
+{$asm}
+)
+
+kill_all_mobs.lua ({
+	Author: inuNorii
+	Description: Kills all unimportant non-player entities in current area
+				 Does not kill friendly NPCs, unique minibosses, or bosses
+				 Feel free to report any missing enemies, ideally with IDs
+}
+{$lua}
+if syntaxcheck then return end
+[ENABLE]
+local WorldChrMan = readPointer("WorldChrMan")
+local SprjSessionManager = readPointer("SprjSessionManager")
+
+local kill_list = {
+	'1300', '1360', '1370', '1446', '1441', '2020', '2270', '2271', '1032', '1100', '2021',
+	'1105', '1280', '1282', '1240', '1200', '1230', '1260', '3090', '2110', '2280', '1440',
+	'1250', '1340', '2190', '1102', '3020', '5226', '5227', '5225', '1390', '1391', '1410',
+	'3220', '1170', '1070', '1180', '2130', '2030', '1350', '5240', '2100', '3070', '2132',
+	'1211', '1310', '3230', '2140', '1470', '1430', '2210', '1210', '3170', '1445', '5223',
+	'1281', '1190', '6000', '6090', '6050', '6060', '6100', '6080', '6040', '6130', '6081',
+	'6070', '6230', '6231', '6320', '6250', '1283', '6240', '1201', '1071', '6280', '6260',
+	'6070', '6290', '6330', '6331', '3210', '2290', '1130', '3120', '2150', '3100', '1220',
+	'2131', '2180', '2060', '2230', '2070', '1241', '2191', '2040', '1442', '1090', '1101',
+	'1106', '3141', '1380', '2080', '6270'
+}
+
+local function kill(ptr)
+	local chr_count = readInteger(ptr)
+	local ChrSet = readPointer(ptr + 0x8)
+	for i=1, chr_count do
+		local EnemyIns = readPointer(ChrSet + i * 0x38)
+		if EnemyIns ~= nil then
+			local ChrModules = readPointer(EnemyIns + 0x1F90)
+			if ChrModules ~= nil then
+				local SprjChrDataModule = readPointer(ChrModules + 0x18)
+				if SprjChrDataModule ~= nil then
+					local id = readString(SprjChrDataModule + 0x132, 8, true)
+					local hp = SprjChrDataModule + 0xD8
+					--print(string.format("EnemyID: %s\nHP: %d\n", id, readInteger(hp)))
+					if inArray(kill_list, id) then
+						writeInteger(hp, 0)
+					end
+				end
+			end
+		end
+	end
+end
+
+if readInteger(SprjSessionManager + 0x16C) < 4 then
+	kill(readPointer(WorldChrMan + 0x1D0))
+	kill(readPointer(WorldChrMan + 0x1E8))
+end
+
+disableMemrec(memrec)
+
+[DISABLE]
+)
+
+log_info.py (import os
+import time
+
+
+def log_player_info(isRunning):
+    # file_path = "C:\\Users\\thanos\\OneDrive - MNSCU\\Desktop\\school\\dark_souls_ai_code\\FP-Machine-Learning\\Code\\player_info.txt"  # Ben's path
+    # file_path = "/mnt/c/Users/Laween/OneDrive/Desktop/MSUM/Spring_2025/490/Final_Project/Dark_Souls/FP-Machine-Learning/Code/data/player_info.txt" # Laween's path
+    # file_path = "C:\\Users\\Laween\\OneDrive\\Desktop\\MSUM\\Spring_2025\\490\\Final_Project\\Dark_Souls\\FP-Machine-Learning\\Code\\data\\player_info.txt"  # Laween's path
+    # file_path = "data\\player_info.txt"  # Laween's path
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(base_dir, "data", "player_info.txt")
+    print("Listening for game data...")
+
+    while isRunning:
+        try:
+            with open(file_path, "r") as file:
+                data = file.read().strip()
+                if data:
+                    health, stamina, estus, x, y, z, a = map(
+                        float, data.split(","))
+                    print(
+                        f"Health: {health}, Stamina: {stamina}, X: {x}, Y: {y}, Z: {z}, angle: {a}")
+        except Exception as e:
+            print(f"Error reading file: {e}")
+
+        # time.sleep(0.1)  # Check every 100ms
+
+
+def log_gundyr_info(isRunning):
+    # file_path = "C:\\Users\\thanos\\OneDrive - MNSCU\\Desktop\\school\\dark_souls_ai_code\\FP-Machine-Learning\\Code\\gundyr_info.txt"  # Ben's path
+    # file_path = "/mnt/c/Users/Laween/OneDrive/Desktop/MSUM/Spring_2025/490/Final_Project/Dark_Souls/FP-Machine-Learning/Code/data/gundyr_info.txt" # Laween's path
+    # file_path = "C:\\Users\\Laween\\OneDrive\\Desktop\\MSUM\\Spring_2025\\490\\Final_Project\\Dark_Souls\\FP-Machine-Learning\\Code\\data\\gundyr_info.txt"  # Laween's path
+    # file_path = "data\\gundyr_info.txt"  # Laween's path
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(base_dir, "data", "gundyr_info.txt")
+
+    print("Listening for game data...")
+
+    while isRunning:
+        try:
+            with open(file_path, "r") as file:
+                data = file.read().strip()
+                if data:
+                    health, x, y, z, a, anim = map(float, data.split(","))
+                    print(
+                        f"Health: {health}, X: {x}, Y: {y}, Z: {z}, angle: {a}, animation: {anim}")
+        except Exception as e:
+            print(f"Error reading file: {e}")
+
+        # time.sleep(0.1)  # Check every 100ms
+)
+
+player_logger.LUA ([ENABLE]
+{$lua}
+
+local file_path = "C:\\Users\\Laween\\OneDrive\\Desktop\\MSUM\\Spring_2025\\490\\Final_Project\\Dark_Souls\\FP-Machine-Learning\\Code\\data\\player_info.txt"
+
+function updateValues()
+    local CURRENT_X_PTR = "[[[WorldChrMan]+40]+28]+80"
+    local CURRENT_Z_PTR = "[[[WorldChrMan]+40]+28]+84"
+    local CURRENT_Y_PTR = "[[[WorldChrMan]+40]+28]+88"
+    local CURRENT_ANGLE_PTR = "[[[WorldChrMan]+40]+28]+74"
+    local CURRENT_HEALTH_PTR = "[[[[WorldChrMan]+80]+1F90]+18]+D8"
+    local CURRENT_STAMINA_PTR = "[[[[WorldChrMan]+80]+1F90]+18]+F0"
+    local CURRENT_ESTUS_PTR = "[[WorldChrMan]+10]+5AC"
+
+    -- Safeguard for weird stamina readings
+    local playerStamina = readInteger(CURRENT_STAMINA_PTR) or -999
+    if playerStamina > 10000 then
+        playerStamina = 0
+    end
+
+    local playerX = readFloat(CURRENT_X_PTR) or -999.0
+    local playerY = readFloat(CURRENT_Y_PTR) or -999.0
+    local playerZ = readFloat(CURRENT_Z_PTR) or -999.0
+    local playerAngle = readFloat(CURRENT_ANGLE_PTR) or -999.0
+    local playerHealth = readInteger(CURRENT_HEALTH_PTR) or -999
+    local playerEstus = readInteger(0x7FF46AF02228) or -999
+
+    -- Fixed the missing comma after playerEstus
+    local data = string.format("%d,%d,%d,%.2f,%.2f,%.2f,%.2f\n",
+                               playerHealth, playerStamina, playerEstus,
+                               playerX, playerY, playerZ, playerAngle)
+
+    local file = io.open(file_path, "w")
+    if file then
+        file:write(data)
+        file:close()
+    end
+end
+
+-- Create and enable the timer
+myTimer = createTimer(nil, false)
+myTimer.Interval = 100  -- in milliseconds
+myTimer.OnTimer = updateValues
+myTimer.setEnabled(true)
+{$asm}
+
+
+[DISABLE]
+{$lua}
+-- Destroy the timer when disabling the script
+if myTimer then
+    myTimer.destroy()
+    myTimer = nil
+end
+{$asm}
+
+)
+
+player_reset.lua ([ENABLE]
+{$lua}
+
+----------------------------------------
+-- 1) Define pointer strings and variables
+----------------------------------------
+local PLAYER_HEALTH_PTR_STR = "[[[[WorldChrMan]+80]+1F90]+18]+D8"
+local LUDEX_TARGET_STR       = "[[[WorldChrMan]+40]+28]+80"
+local CURRENT_ANGLE_PTR      = "[[[WorldChrMan]+40]+28]+74"
+
+
+local WAIT_SECS = 20000  -- wait 10 seconds after death
+
+local playerDeathTime = 0  -- 0 means no death detected yet
+local hasReset = false     -- flag to ensure reset is only done once per death
+
+
+
+local function reset()
+      sleep(20000)
+  local al = getAddressList()
+  local prep = al.getMemoryRecordByDescription("Prep")
+  if prep then
+    prep.Active = true
+    print("Script 'Prep' enabled.")
+  else
+    print("Script 'Prep' not found.")
+  end
+
+  end
+
+
+
+
+----------------------------------------
+-- 2) Ludex script function (writing bytes)
+----------------------------------------
+local function writeLudexBytes()
+sleep(WAIT_SECS)
+hasReset = true
+  writeBytes(LUDEX_TARGET_STR,
+    0x93, 0xE6, 0xF8, 0x42,
+    0x6D, 0xD0, 0x7F, 0xC2,
+    0xC7, 0xF3, 0x0A, 0x44
+  )
+  print("[P_Reset] Ludex bytes written manually.")
+
+-- Set desired angle
+local targetAngle = -2.778103352
+local angleAddr = getAddressSafe(CURRENT_ANGLE_PTR)
+if angleAddr then
+  writeFloat(angleAddr, targetAngle)
+  print("Player angle set to:", targetAngle)
+else
+  print("ERROR: Could not resolve angle pointer!")
+  getScript().Active = false
+  return
+end
+
+end
+
+----------------------------------------
+-- 3) Timer callback function (re-resolves pointer each time)
+----------------------------------------
+local function checkAndReset()
+  -- Re-resolve the player HP pointer each time to ensure we get an updated value.
+  local curHPAddr = getAddress(PLAYER_HEALTH_PTR_STR)
+  local hp = (curHPAddr and readInteger(curHPAddr)) or -1
+  print(string.format("[P_Reset] Checking PlayerHP=%d", hp))
+
+  if hp <= 0 then
+    if playerDeathTime == 0 then
+      playerDeathTime = os.time()
+      print("[P_Reset] Player death detected. Waiting " .. WAIT_SECS .. " seconds before reset.")
+      reset()
+    end
+    if not hasReset and hp > 0 then
+      print("[P_Reset] Setting hasReset to true.")
+      hasReset = true
+    end
+  else
+    if playerDeathTime ~= 0 then
+      print("[P_Reset] Player revived. Resetting death state.")
+      playerDeathTime = 0
+      hasReset = false
+    end
+  end
+end
+
+----------------------------------------
+-- 4) Create and enable the timer
+----------------------------------------
+playerResetTimer = createTimer(nil, false)
+playerResetTimer.Interval = 1000  -- check every 100ms
+playerResetTimer.OnTimer = checkAndReset
+playerResetTimer.setEnabled(true)
+print("[P_Reset] Timer enabled. Player reset script active.")
+
+{$asm}
+
+[DISABLE]
+{$lua}
+if playerResetTimer then
+  playerResetTimer.destroy()
+  playerResetTimer = nil
+end
+{$asm}
+)
+
+Prep.lua ([ENABLE]
+{$lua}
+
+-- Resolve pointers:
+local bossBattleAddr = getAddress("[[GameDataMan]+C0]")
+local playerHPAddr   = getAddress("[[[[WorldChrMan]+80]+1F90]+18]+D8")
+local playerXAddr    = getAddress("[[[WorldChrMan]+40]+28]+80")
+
+if not bossBattleAddr then
+  print("ERROR: Could not resolve boss fight pointer.")
+  return
+end
+if not playerHPAddr then
+  print("ERROR: Could not resolve player HP pointer.")
+  return
+end
+if not playerXAddr then
+  print("ERROR: Could not resolve player X pointer.")
+  return
+end
+
+-- Read values:
+local inBossFight = readByte(bossBattleAddr) or 0
+local playerHP    = readInteger(playerHPAddr) or 0
+local playerX     = readFloat(playerXAddr) or 0
+
+print(string.format("inBossFight = %s, playerHP = %d, playerX = %.2f", inBossFight, playerHP, playerX))
+
+-- Check if the player is not in a boss fight (assumed inBossFight==0),
+-- health is above 0, and x position is between 102 and 105.
+if inBossFight == 0 and playerHP > 0  then
+  print("Conditions met: Not in boss fight, health > 0, and x position in [102,105].")
+  -- Get the address list to enable other scripts:
+  local al = getAddressList()
+  local kill = al.getMemoryRecordByDescription("Kill All Mobs")
+  local TP = al.getMemoryRecordByDescription("TP to Boss")
+  local lockon = al.getMemoryRecordByDescription("IncreaseLockOn Range")
+  if kill then
+    kill.Active = true
+    print("Script 'Kill All Mobs' enabled.")
+  else
+    print("Script 'Kill All Mobs' not found.")
+  end
+  if TP then
+    TP.Active = true
+    print("Script 'TP to Boss' enabled.")
+  else
+    print("Script 'TP to Boss' not found.")
+  end
+    if lockon then
+lockon.Active = false
+    lockon.Active = true
+    print("Script 'IncreaseLockOn Range' enabled.")
+  else
+    print("Script 'IncreaseLockOn Range' not found.")
+  end
+else
+  print("Player is in boss fight or conditions not met; scripts not enabled.")
+end
+
+getScript().Active = false
+{$asm}
+
+[DISABLE]
+{$lua}
+-- No disable code required.
+{$asm}
+)
+
+resurrect_all_bosses.lua ({$lua}
+if syntaxcheck then return end
+
+[ENABLE]
+local flagsBase = {
+14000800, -- Iudex Gundyr - Defeated
+14000801, -- Iudex Gundyr - Encountered
+14000802, -- Iudex Gundyr - Pulled Sword Out
+13000800, -- Vordt of the Boreal Valley - Defeated
+13000801, -- Vordt of the Boreal Valley - Encountered
+13100800, -- Curse-Rotted Greatwood - Defeated
+13100801, -- Curse-Rotted Greatwood - Encountered
+13300850, -- Crystal Sage - Defeated
+13300852, -- Crystal Sage - Encountered
+13500800, -- Deacons of the Deep - Defeated
+13500801, -- Deacons of the Deep - Encountered
+13300800, -- Abyss Watchers - Defeated
+13300801, -- Abyss Watchers - Encountered
+13800800, -- High Lord Wolnir - Defeated
+13800801, -- High Lord Wolnir - Encountered
+13800830, -- Old Demon King - Defeated
+13900800, -- Yhorm the Giant - Defeated
+13900801, -- Yhorm the Giant - Encountered
+13700850, -- Pontiff Sulyvahn - Defeated
+13700800, -- Aldrich, Devourer of Gods - Defeated
+13000890, -- Dancer of the Boreal Valley - Defeated
+13000830, -- Oceiros, the Consumed King - Defeated
+13000838, -- Oceiros, the Consumed King - Encountered
+14000830, -- Champion Gundyr - Defeated
+14000831, -- Champion Gundyr - Encountered
+13200800, -- Ancient Wyvern - Defeated
+13200850, -- Nameless King - Defeated
+13010800, -- Dragonslayer Armour - Defeated
+13410830, -- Twin Princes - Defeated
+13410831, -- Twin Princes - Encountered
+14100800, -- Soul of Cinder - Defeated
+14100801, -- Soul of Cinder - Encountered
+}
+local flagsDLC1 = {
+14500860, -- Champion's Gravetender - Defeated
+14500861, -- Champion's Gravetender - Encountered
+14500620, -- Father Ariandel and Sister Friede - Unlock Ariendel's Room
+14500800, -- Father Ariandel and Sister Friede - Defeated
+14500801, -- Father Ariandel and Sister Friede - Encountered
+}
+local flagsDLC2 = {
+15000800, -- Demon Prince - Defeated
+15100801, -- Halflight, Spear of the Church - Encountered
+15100800, -- Halflight, Spear of the Church - Defeated
+15100851, -- Darkeater Midir - Encountered
+15100850, -- Darkeater Midir - Defeated
+15110801, -- Slave Knight Gael - Encountered
+15110800 -- Slave Knight Gael - Defeated
+}
+
+local flags = {flagsBase}
+if readByte(readQword("CSDlc")+0x11) == 1 then table.insert(flags, flagsDLC1) end
+if readByte(readQword("CSDlc")+0x12) == 1 then table.insert(flags, flagsDLC2) end
+
+ef.runThread2 = true
+local thread = createThread(function()
+	local results = {}
+  local total = 0
+	for i,v in ipairs(flags) do
+		if not ef.runThread2 then break end
+  	n = #v
+    table.insert(results, n)
+    local p1, p2, count = 0, 0
+    local t = os.clock()
+    for i,v in ipairs(v) do
+		  if not ef.runThread2 then break end
+      ef.setFlag(v, 0)
+      p1 = i*100//n
+      if p1 ~= p2 then print(p1.."% "..(os.clock() - t)*100//1/100) p2 = p1 end
+    end
+	end
+  for i,v in ipairs(results) do total = total + v end
+  print(string.format("Set %s flags!", total))
+	ef.runThread2 = false
+end)
+
+[DISABLE]
+ef.runThread2 = false)
+
+start_fight_INCOMPLETE.lua ([ENABLE]
+{$lua}
+
+------------------------------------------------------------
+-- 0) Helper functions (case-insensitive module search)
+------------------------------------------------------------
+function getModuleBaseByName(modname)
+  local mods = enumModules()
+  if not mods then
+    return nil
+  end
+
+  local modLower = modname:lower()
+  for i, m in ipairs(mods) do
+    if m.Name:lower() == modLower then
+      return m.Address, m.Name  -- Return both the address and exact name
+    end
+  end
+  return nil
+end
+
+function getProcAddressByExport(modname, exportname)
+  local base, realName = getModuleBaseByName(modname)
+  if not base or not realName then
+    return nil
+  end
+
+  local exports = enumExports(realName)
+  if not exports then
+    return nil
+  end
+
+  for i, e in ipairs(exports) do
+    if e.Name == exportname then
+      return e.Address
+    end
+  end
+  return nil
+end
+
+------------------------------------------------------------
+-- 1) Find USER32.dll and keybd_event (case-insensitive)
+------------------------------------------------------------
+local keybd_event_addr = getProcAddressByExport("user32.dll", "keybd_event")
+if not keybd_event_addr then
+  print("ERROR: Could not find 'keybd_event' export in user32.dll!")
+  getScript().Active = false
+  return
+end
+
+------------------------------------------------------------
+-- 2) Define pressKey function (uses keybd_event_addr)
+------------------------------------------------------------
+function pressKey(vk)
+  -- KEYEVENTF_KEYDOWN = 0
+  -- KEYEVENTF_KEYUP   = 2
+  executeCodeLocal(keybd_event_addr, vk, 0, 0, 0) -- keydown
+  sleep(50)
+  executeCodeLocal(keybd_event_addr, vk, 0, 2, 0) -- keyup
+end
+
+-- Virtual-key codes for E and Q
+local VK_E = 0x45
+local VK_Q = 0x51
+
+------------------------------------------------------------
+-- 3) Define pointer strings for player coords & angle
+------------------------------------------------------------
+local CURRENT_X_PTR = "[[[WorldChrMan]+40]+28]+80"
+local CURRENT_Z_PTR = "[[[WorldChrMan]+40]+28]+84"
+local CURRENT_Y_PTR = "[[[WorldChrMan]+40]+28]+88"
+local CURRENT_ANGLE_PTR = "[[[WorldChrMan]+40]+28]+74"
+
+-- Desired angle (radians) for facing the fog wall
+local targetAngle = -2.778103352
+-- Distance to move forward
+local moveDistance = 5
+
+------------------------------------------------------------
+-- 4) Set player's angle
+------------------------------------------------------------
+local angleAddr = getAddressSafe(CURRENT_ANGLE_PTR)
+if angleAddr then
+  writeFloat(angleAddr, targetAngle)
+  print("Player angle set to:", targetAngle)
+else
+  print("ERROR: Could not resolve angle pointer!")
+  getScript().Active = false
+  return
+end
+
+------------------------------------------------------------
+-- 5) Move the player 5 units forward
+------------------------------------------------------------
+local xAddr = getAddressSafe(CURRENT_X_PTR)
+local zAddr = getAddressSafe(CURRENT_Z_PTR)
+if (not xAddr) or (not zAddr) then
+  print("ERROR: Could not resolve X/Z pointers!")
+  getScript().Active = false
+  return
+end
+
+local currentX = readFloat(xAddr)
+local currentZ = readFloat(zAddr)
+print("Current position: X =", currentX, "Z =", currentZ)
+
+-- Simple trig: newX = oldX + distance*cos(angle)
+--              newZ = oldZ + distance*sin(angle)
+local newX = currentX + moveDistance * math.cos(targetAngle)
+local newZ = currentZ + moveDistance * math.sin(targetAngle)
+
+-- Write new coords
+writeFloat(xAddr, newX)
+writeFloat(zAddr, newZ)
+print("Moved player to X =", newX, "Z =", newZ)
+
+------------------------------------------------------------
+-- 6) Interact with fog wall: press E
+------------------------------------------------------------
+print("Pressing E to interact with fog wall...")
+pressKey(VK_E)
+
+------------------------------------------------------------
+-- 7) Wait 1 second, then lock on with Q
+------------------------------------------------------------
+sleep(1000)
+print("Pressing Q to lock on to boss...")
+pressKey(VK_Q)
+
+------------------------------------------------------------
+-- 8) Disable script so it runs only once
+------------------------------------------------------------
+getScript().Active = false
+
+{$asm}
+
+[DISABLE]
+{$lua}
+-- No cleanup needed
+{$asm}
+)
+
+start_fight.py (import threading
+import control_ds3_ml as control
+from log_info import log_player_info, log_gundyr_info
+from pynput.keyboard import Key  # add this import at the top if not present
+import pydirectinput as direct_input
+import time
+
+locked_on = False
+running = True  # flag for stopping logging threads
+
+
+def main():
+    control.focus_on_game()
+    control.move_forward(2)
+    control.interact()
+    control.lock_on()
+
+    # Start logging functions in separate threads without setting daemon=True
+    player_thread = threading.Thread(
+        target=log_player_info, args=(lambda: running,))
+    gundyr_thread = threading.Thread(
+        target=log_gundyr_info, args=(lambda: running,))
+    player_thread.start()
+    gundyr_thread.start()
+
+    while locked_on:
+        time.sleep(0.1)
+
+    # Signal threads to stop and wait for them to exit gracefully
+    global running
+    running = False
+    player_thread.join()
+    gundyr_thread.join()
+
+
+def move_forward():
+    control.keyboard.press('w')
+    time.sleep(2)
+    control.keyboard.release('w')
+
+
+def enter_fog():
+    control.keyboard.press('e')
+    time.sleep(0.2)
+    control.keyboard.release('e')
+
+
+def lock_on():
+    control.keyboard.press('q')
+    time.sleep(0.2)
+    control.keyboard.release('q')
+    global locked_on
+    locked_on = True
+
+
+def focus_on_game():
+    # Hold alt and press tab with extended delays
+    direct_input.keyDown('alt')
+    time.sleep(0.2)
+    direct_input.press('tab')
+    time.sleep(0.2)
+    direct_input.keyUp('alt')
+    time.sleep(0.3)  # give OS time to switch
+    # Release alt and tab keys
+    direct_input.keyUp('alt')
+    time.sleep(0.1)
+
+
+if __name__ == "__main__":
+    main()
+)
+
+TP_to_Boss.lua ([ENABLE]
+{$lua}
+-- Define pointer strings
+local PLAYER_HEALTH_PTR_STR = "[[[[WorldChrMan]+80]+1F90]+18]+D8"
+local LUDEX_TARGET_STR       = "[[[WorldChrMan]+40]+28]+80"
+local CURRENT_ANGLE_PTR      = "[[[WorldChrMan]+40]+28]+74"
+
+-- Write the desired bytes (this action is performed only once)
+writeBytes(LUDEX_TARGET_STR,
+  0x93, 0xE6, 0xF8, 0x42,
+  0x6D, 0xD0, 0x7F, 0xC2,
+  0xC7, 0xF3, 0x0A, 0x44
+)
+print("[TP] Teleported Successfully!")
+
+
+-- Set desired angle
+local targetAngle = -2.778103352
+local angleAddr = getAddressSafe(CURRENT_ANGLE_PTR)
+if angleAddr then
+  writeFloat(angleAddr, targetAngle)
+  print("Player angle set to:", targetAngle)
+else
+  print("ERROR: Could not resolve angle pointer!")
+  getScript().Active = false
+  return
+end
+
+-- Freeze angle for 3 seconds to override external tool influences
+--local freezeDuration = 3.0  -- seconds
+--local startTime = os.clock()
+--while (os.clock() - startTime) < freezeDuration do
+--  writeFloat(angleAddr, targetAngle)
+--  sleep(100)
+--end
+--print("Player angle frozen for", freezeDuration, "seconds.")
+
+
+-- Automatically disable this script so it runs only once
+getScript().Active = false
+{$asm}
+
+[DISABLE]
+{$lua}
+
+{$asm}
+)
+
+dark_souls_api_bk_1.py (import os
+import time
+import numpy as np
+import triggers
+
+
+# Paths to the logger output files
+PLAYER_INFO_PATH = "C:\\Users\\Laween\\OneDrive\\Desktop\\MSUM\\Spring_2025\\490\\Final_Project\\Dark_Souls\\FP-Machine-Learning\\Code\\data\\player_info.txt"
+GUNDYR_INFO_PATH = "C:\\Users\\Laween\\OneDrive\\Desktop\\MSUM\\Spring_2025\\490\\Final_Project\\Dark_Souls\\FP-Machine-Learning\\Code\\data\\gundyr_info.txt"
+# Path to the action trigger file
+ACTION_TRIGGER_PATH = "C:\\Users\\Laween\\OneDrive\\Desktop\\MSUM\\Spring_2025\\490\\Final_Project\\Dark_Souls\\FP-Machine-Learning\\Code\\data\\action_trigger.txt"
+
+action_dict = {
+    0: "light attack",
+    1: "dodge",
+    2: "heal"
+}
+
+
+def reset_environment():
+    """
+    Reset the game environment.
+    """
+    print("Resetting environment: Teleporting player to boss arena, stepping forward, interacting...")
+    triggers.env_trigger()
+    return get_state()
+
+
+# def step_environment(action):
+#     """
+#     Apply an action to the game.
+#     'action' is a dictionary with:
+#        - 'command': integer (0: light attack, 1: dodge, 2: heal)
+#        - 'movement': float (a continuous value representing forward/backward movement)
+
+#     In your final implementation, you would send these commands to the game (e.g. by writing to a file
+#     that a Lua script reads). Here we just simulate a short delay.
+#     """
+#     print(
+#         f"Python: Applying action: command={action['command']}, movement={action['movement']}")
+#     # Here you could write the action to a file that your Lua script will read.
+#     time.sleep(0.1)
+#     # Get the new state, compute reward, and check if episode is done.
+#     state = get_state()
+#     reward = compute_reward(state, action)
+#     done = check_done(state)
+#     info = {}
+#     return state, reward, done, info
+
+
+def step_environment(action):
+    print(
+        f"Python: Applying action: command={action['command']}, movement={action['movement']}")
+    # Write the action to the trigger file:
+    with open(ACTION_TRIGGER_PATH, "w") as f:
+        f.write(f"{action['command']},{action['movement']}")
+    # Simulate step delay
+    time.sleep(0.1)
+    state = get_state()
+    reward = compute_reward(state, action)
+    done = check_done(state)
+    info = {}
+    return state, reward, done, info
+
+
+def get_state():
+    """
+    Read the game state from your log files.
+    Expected format:
+      - PLAYER_INFO_PATH contains: playerHealth,playerStamina,playerX,playerY,playerZ,playerAngle
+      - GUNDYR_INFO_PATH contains: bossHealth,bossX,bossY,bossZ,bossAngle,bossAnimState
+    We combine these into one state vector.
+    """
+    # Default values if file reading fails.
+    player_state = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    boss_state = [1037.0, 0.0, 0.0, 0.0, 0.0, "idle"]
+
+    try:
+        with open(PLAYER_INFO_PATH, "r") as f:
+            line = f.readline().strip()
+            parts = line.split(",")
+            if len(parts) >= 6:
+                player_state = [float(p) for p in parts[:6]]
+    except Exception as e:
+        print("Error reading player info:", e)
+
+    try:
+        with open(GUNDYR_INFO_PATH, "r") as f:
+            line = f.readline().strip()
+            parts = line.split(",")
+            if len(parts) >= 6:
+                # boss_state: health, x, y, z, angle, animState (animState remains a string)
+                boss_state = [float(p) for p in parts[:5]] + [parts[5]]
+    except Exception as e:
+        print("Error reading boss info:", e)
+
+    # Convert the boss animation state to a numeric value.
+    anim_map = {"idle": 0, "attack": 1, "damage": 2, "death": 3}
+    boss_anim = anim_map.get(boss_state[5], 0)
+
+    # Final state vector: [playerHealth, playerStamina, playerX, playerY, playerZ, playerAngle,
+    #                      bossHealth, bossX, bossY, bossZ, bossAngle, bossAnim]
+    state = np.array(
+        player_state + boss_state[:5] + [boss_anim], dtype=np.float32)
+    return state
+
+
+def compute_reward(state, action):
+    """
+    Compute the reward for the current state and action.
+    For example, you may consider:
+      - Positive reward for decreasing boss health.
+      - Negative reward for taking damage (decrease in player health).
+      - A small time penalty per step.
+    For this stub, we create a simple heuristic.
+    """
+    # State indices:
+    # player state: [0]: health, [1]: stamina, [2]: x, [3]: y, [4]: z, [5]: angle
+    # boss state: [6]: health, [7]: x, [8]: y, [9]: z, [10]: angle, [11]: animState
+
+    player_health = state[0]
+    boss_health = state[6]
+
+    # For a reward, we can do:
+    # Reward = (damage to boss) - (damage taken by player) - (small step penalty)
+    # Here, assume baseline boss health is 1037.0; damage dealt = 1037 - current boss health.
+    boss_damage = 1037.0 - boss_health
+    # For player, assume full health is 500.
+    player_damage = 500.0 - player_health
+
+    # Small penalty per step
+    time_penalty = 0.01
+
+    reward = boss_damage * 0.1 - player_damage * 0.1 - time_penalty
+    return reward
+
+
+def check_done(state):
+    """
+    Check whether the episode is finished.
+    An episode is done if the boss is defeated (boss health <= 0) or if the player dies (player health <= 0).
+    """
+    player_health = state[0]
+    boss_health = state[6]
+    if boss_health <= 0 or player_health <= 0:
+        return True
+    return False
+)
+
+DS3_Table_V1.CT (this file has 16,000 ish lines so i will only add the name)
+
+gym_wrapper_bk_1.py (import gym
+from gym import spaces
+import numpy as np
+import time
+from stable_baselines3 import PPO
+from stable_baselines3.common.env_util import make_vec_env
+import os
+from dark_souls_api_bk_1 import reset_environment, step_environment, get_state, compute_reward, check_done
+
+
+# class dark_souls_api:
+#     @staticmethod
+#     def reset_environment():
+#          """
+#         Reset the game environment:
+#         - Teleport the player to just before the fog wall.
+#         - Step forward, press E to interact with the fog wall, and press Q to lock on.
+#         Returns the initial state vector.
+#         """
+#         # Here, you would call your existing Lua scripts (or another mechanism)
+#         # to reset the player's position, angle, and lock-on state.
+
+#         print("Resetting environment (teleport, interact, lock on)...")
+#         # Wait a bit for the game to settle:
+#         time.sleep(2)
+#         # For now, we return a dummy initial state:
+#         return dark_souls_api.get_state()
+
+#     @staticmethod
+#     def step_environment(action):
+#         """
+#         Apply the action to the game, wait a bit, then return:
+#         (new_state, reward, done, info)
+#         'action' is a dictionary with:
+#             'command': 0 (light attack), 1 (dodge), or 2 (heal)
+#             'movement': continuous scalar (e.g., desired forward movement)
+#         """
+#         # Simulate sending the movement command and performing the command.
+#         # print(
+#         #     f"Applying action: command={action['command']}, movement={action['movement']}")
+#         command = int(action[0])
+#         movement = (action[1] - 10) / 10  # convert 0–20 to -1.0 to 1.0
+
+#         print(f"Applying action: command={command}, movement={movement}")
+
+#         # Here you would:
+#         # - For movement: Write the new player position relative to current position
+#         # - For command: Simulate the corresponding key press or call game function
+#         # For now, we simulate a step delay:
+#         time.sleep(0.1)
+
+#         # Compute dummy reward values:
+#         # (For example, positive reward for boss damage, negative for player damage, etc.)
+#         state = dark_souls_api.get_state()
+#         reward = dark_souls_api.compute_reward(
+#             state, {"command": command, "movement": movement})
+#         # reward = dark_souls_api.compute_reward(state, action)
+#         done = dark_souls_api.check_done(state)
+#         info = {}  # additional info if needed
+#         return state, reward, done, info
+
+#     @staticmethod
+#     def get_state():
+#         """
+#         Read the game state from memory and return a feature vector.
+#         For example:
+#           - Player: health, stamina, x, y, z, angle.
+#           - Boss: health, boss flag (converted to a float or one-hot).
+#         For now, we return a dummy numpy array.
+#         """
+#         # Example state vector (length 10):
+#         # [player_health, player_stamina, player_x, player_y, player_z, player_angle,
+#         #  boss_health, boss_flag, boss_x, boss_z]
+#         # Replace with actual memory reads.
+#         state = np.array([
+#             500.0,  # player health
+#             100.0,  # player stamina
+#             0.0,    # player x
+#             0.0,    # player y
+#             0.0,    # player z
+#             -2.78,  # player angle
+#             1037.0,  # boss health
+#             0.0,    # boss flag (e.g., 0 means alive, 1 means defeated)
+#             10.0,   # boss x
+#             10.0    # boss z
+#         ], dtype=np.float32)
+#         return state
+
+#     @staticmethod
+#     def compute_reward(state, action):
+#         """
+#         Compute reward based on state and action.
+#         Example:
+#           - Reward positive for decrease in boss health.
+#           - Negative reward for player taking damage.
+#           - Time penalty.
+#         For now, return a dummy reward.
+#         """
+#         # For demonstration, return a random reward:
+#         return np.random.rand() - 0.5
+
+#     @staticmethod
+#     def check_done(state):
+#         """
+#         Check if the episode is done.
+#         Episode might be done if:
+#           - Boss is defeated, or
+#           - Player is dead.
+#         For now, we simulate done condition:
+#         """
+#         # If boss health is below a threshold or player health is 0, episode is done.
+#         if state[6] <= 0 or state[0] <= 0:
+#             return True
+#         return False
+
+# =============================================================================
+# Custom Gym Environment for Dark Souls Gundyr
+# =============================================================================
+
+
+class DarkSoulsGundyrEnv(gym.Env):
+    metadata = {"render.modes": ["human"]}
+
+    def __init__(self):
+        super(DarkSoulsGundyrEnv, self).__init__()
+
+        # Define observation space (example: 10 continuous features)
+        # Adjust the dimension to match your state vector.
+        self.observation_space = spaces.Box(
+            low=-np.inf, high=np.inf, shape=(12,), dtype=np.float32
+        )
+
+        # Define action space:
+        # "command": discrete: 0: light attack, 1: dodge, 2: heal.
+        # "movement": continuous: a scalar (e.g., desired forward displacement, in range -1 to 1).
+        # self.action_space = spaces.Dict({
+        #     "command": spaces.Discrete(3),
+        #     "movement": spaces.Box(low=-1.0, high=1.0, shape=(1,), dtype=np.float32)
+        # })
+
+        # Use MultiDiscrete for mixed discrete-continuous encoded as discrete buckets
+        # 3 commands × 21 movement bins (-1.0 to 1.0)
+        self.action_space = spaces.MultiDiscrete([3, 21])
+
+        # Optionally, define any additional variables
+        self.current_state = None
+        self.steps = 0
+        self.max_steps = 1000  # For example, end episode after 1000 steps
+
+    def seed(self, seed=None):
+        np.random.seed(seed)
+        return [seed]
+
+    def reset(self):
+        """
+        Reset the game environment. This function will:
+          - Teleport the player to just before the fog wall,
+          - Step forward,
+          - Interact with the fog wall (press E) and lock on (press Q),
+          and then return the initial state vector.
+        """
+        # Call the API reset function. In practice, this will use your Lua scripts or
+        # other interfacing code to reset the game state.
+        self.current_state = reset_environment()
+        self.steps = 0
+        return self.current_state
+
+    def step(self, action):
+        """
+        Apply the given action to the game, then return (state, reward, done, info).
+        """
+        self.steps += 1
+        command = int(action[0])
+        movement = (action[1] - 10) / 10  # map 0–20 to -1.0 to 1.0
+        # act = {"command": command, "movement": np.array(
+        #     [movement], dtype=np.float32)}
+
+        act = {"command": command, "movement": movement}
+
+        # Apply the action via your API
+        next_state, reward, done, info = step_environment(
+            act)
+
+        self.current_state = next_state
+
+        # Optionally add a time penalty to reward (to encourage faster boss defeat)
+        reward = reward - 0.01  # small penalty per step
+
+        # If max steps reached, set done to True
+        if self.steps >= self.max_steps:
+            done = True
+
+        return self.current_state, reward, done, info
+
+    def render(self, mode="human"):
+        """
+        Optionally, implement rendering (e.g., by showing the current game screen).
+        For now, we can print the state or leave it blank.
+        """
+        print("Current State:", self.current_state)
+
+    def close(self):
+        """
+        Any necessary cleanup.
+        """
+        pass
+
+# =============================================================================
+# Training Code Example Using Stable-Baselines3 (PPO)
+# =============================================================================
+
+
+if __name__ == "__main__":
+
+    # Create a vectorized environment (using 4 parallel instances)
+    env = make_vec_env(lambda: DarkSoulsGundyrEnv(), n_envs=4)
+
+    # Create the PPO model with the default MLP policy
+    # model = PPO("MlpPolicy", env, verbose=1)
+    model = PPO(
+        "MlpPolicy",
+        env,
+        verbose=1,
+        learning_rate=3e-4,
+        n_steps=2048,
+        batch_size=64,
+        n_epochs=10,
+        gamma=0.99,
+        gae_lambda=0.95,
+        clip_range=0.2,
+    )
+
+
+    # Train the model for a number of timesteps
+    total_timesteps = 100000  # adjust as needed
+    model.learn(total_timesteps=total_timesteps)
+
+    # Save the trained model
+    model.save("ppo_dark_souls_gundyr")
+
+    # Optionally, run a test episode
+    obs = env.reset()
+    done = False
+    total_reward = 0
+    while not done:
+        action, _states = model.predict(obs)
+        obs, reward, done, info = env.step(action)
+        total_reward += reward
+        env.render()
+    print("Test episode total reward:", total_reward)
+
+    env.close()
+)
+
+train_bk_1.py (from stable_baselines3 import PPO
+from stable_baselines3.common.env_util import make_vec_env
+import gym_wrapper_bk_1 as gym_wrapper
+import dark_souls_api_bk_1 as dark_souls_api
+if __name__ == "__main__":
+    dark_souls_api.ready_for_training()
+
+    # Create a vectorized environment with 1 parallel instances.
+    # NOTE: we can think about 4 parallel instances for faster training.
+    env = make_vec_env(lambda: gym_wrapper.DarkSoulsGundyrEnv(), n_envs=1)
+    model = PPO("MlpPolicy", env, verbose=1)
+    total_timesteps = 100000  # Adjust timesteps as needed.
+    model.learn(total_timesteps=total_timesteps)
+    model.save("ppo_dark_souls_gundyr")
+    # ✅ Waits until CE Lua script writes "True"
+    # dark_souls_api.wait_until_in_arena()
+
+    # Run a test episode.
+    obs = env.reset()
+    done = False
+    total_reward = 0
+
+    while not done:
+        action, _ = model.predict(obs)
+        obs, reward, done, info = env.step(action)
+        total_reward += reward
+        env.render()
+
+    print("Test episode total reward:", total_reward)
+    env.close()
+)

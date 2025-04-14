@@ -25,6 +25,56 @@ def reset_environment():
     triggers.env_trigger()
     return get_state()
 
+# def reset_environment():
+#     """
+#     Reset the game environment without relying on triggers module.
+#     - Teleport player to boss arena.
+#     - Move forward, interact with fog wall, lock onto boss.
+#     Returns the initial state.
+#     """
+#     print("Resetting environment: Teleporting player to boss arena...")
+    
+#     # Teleport player
+#     run_lua_script("archive/TP_to_Boss.LUA")
+    
+#     # Focus on game window
+#     print("Focusing on game window...")
+#     direct_input.keyDown('alt')
+#     time.sleep(0.2)
+#     direct_input.press('tab')
+#     time.sleep(0.2)
+#     direct_input.keyUp('alt')
+#     time.sleep(0.3)
+#     direct_input.keyUp('alt')
+#     time.sleep(0.1)
+    
+#     # Move forward for 2 seconds
+#     print("Moving forward to fog wall...")
+#     direct_input.keyDown('w')
+#     time.sleep(2)
+#     direct_input.keyUp('w')
+    
+#     # Interact with fog wall (press E)
+#     print("Interacting with fog wall...")
+#     direct_input.keyDown('e')
+#     time.sleep(0.2)
+#     direct_input.keyUp('e')
+    
+#     # Wait for transition (adjust based on game timing)
+#     time.sleep(1)
+    
+#     # Lock onto boss (press Q)
+#     print("Locking onto boss...")
+#     direct_input.keyDown('q')
+#     time.sleep(0.2)
+#     direct_input.keyUp('q')
+    
+#     # Allow game state to stabilize
+#     time.sleep(0.5)
+    
+#     # Return initial state
+#     return get_state()
+
 
 # def step_environment(action):
 #     """

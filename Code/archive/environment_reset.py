@@ -6,7 +6,7 @@ PLAYER_DATA_FILE = "data/player_info.txt"
 BOSS_DATA_FILE = "data/gundyr_info.txt"
 
 # Define the reset coordinates for the player (adjust these values as needed)
-TODO: make this refer to the lua script set_poisition.lua
+# TODO: make this refer to the lua script set_poisition.lua
 RESET_POSITION = {
     "x": 100.0,  # Example value: change to your desired X coordinate
     "y": 50.0,   # Example value: change to your desired Y coordinate
